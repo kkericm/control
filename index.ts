@@ -1,5 +1,6 @@
 
 import * as mc from "@minecraft/server"
+import { world, system } from "@minecraft/server"
 import { 
     OnLookAtEntityAfterEvent,
     OnLookAtBlockAfterEvent
@@ -29,7 +30,22 @@ export class Control {
             local = "world";
         }
         mc[local][afbe][et][mode](event => callback(event));
-    }
+    };
+
+    log(message: any, target?: mc.EntityQueryOptions) {
+        var msg: string
+        if (typeof message == "object") {
+            msg = JSON.stringify(message)
+        } else {
+            msg = `${message}`
+        }
+
+        if (target === undefined) {
+            world.sendMessage(msg)
+        } else {
+            world.getPlayers(target)[0].sendMessage(msg)
+        }
+    };
 }
 
 export const control = new Control()
