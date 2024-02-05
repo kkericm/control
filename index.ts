@@ -5,6 +5,7 @@ import {
     OnLookAtEntityAfterEvent,
     OnLookAtBlockAfterEvent
 } from "./events"
+import * as ev from "./events"
 
 export class Control {
     on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
@@ -32,6 +33,10 @@ export class Control {
         mc[local][afbe][et][mode](event => callback(event));
     };
 
+    onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
+        this.on({trigger: eventTrigger, mode: "on_shot"}, event => callback(event))
+    };
+
     log(message: any, target?: mc.EntityQueryOptions) {
         var msg: string
         if (typeof message == "object") {
@@ -45,6 +50,28 @@ export class Control {
         } else {
             world.getPlayers(target)[0].sendMessage(msg)
         }
+    };
+
+    afterEvents = {
+        onLookAtEntity: new ev.OnLookAtEntityAfterEventSignal(),
+        onLookAtBlock: new ev.OnLookAtBlockAfterEventSignal(),
+    };
+
+    getProperty<T = any>(propertyName: string): T {
+        let prop: T = world.getDynamicProperty(propertyName) as any;
+        if (typeof prop === "object") {
+            return prop as T;
+        } else {
+            return JSON.parse(prop as string) as T;
+        }
+    };
+    setProperty<T = any>(propertyName: string, _new: T): void {
+        world.setDynamicProperty(propertyName, JSON.stringify(_new));
+    };
+    editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
+        let data: T = this.getProperty<T>(propertyName);
+        callback(data);
+        this.setProperty(propertyName, data);
     };
 }
 
