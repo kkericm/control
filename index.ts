@@ -1,7 +1,7 @@
 
 import * as mc from "@minecraft/server"
 import { world, system } from "@minecraft/server"
-import { 
+import {
     OnLookAtEntityAfterEvent,
     OnLookAtBlockAfterEvent
 } from "./events"
@@ -34,13 +34,13 @@ export class Control {
     };
 
     onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
-        this.on({trigger: eventTrigger, mode: "on_shot"}, event => callback(event))
+        this.on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
     };
 
-    log(message: any, target?: mc.EntityQueryOptions) {
+    log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
         var msg: string
         if (typeof message == "object") {
-            msg = JSON.stringify(message)
+            msg = JSON.stringify(message, undefined, indent)
         } else {
             msg = `${message}`
         }
@@ -85,9 +85,9 @@ type EventTrigger<Event> = Event | {
 type Event = WorldAfterEvent | WorldBeforeEvent | SystemAfterEvent | SystemBeforeEvent | CustomAfterEvent
 
 type WorldAfterEvent = "blockExplode" | "buttonPush" | "chatSend" | "dataDrivenEntityTrigger" | "effectAdd" | "entityDie" | "entityHealthChanged" | "entityHitBlock" | "entityHitEntity" | "entityHurt" | "entityLoad" | "entityRemove" | "entitySpawn" | "explosion" | "itemCompleteUse" | "itemDefinitionEvent" | "itemReleaseUse" | "itemStartUse" | "itemStartUseOn" | "itemStopUse" | "itemStopUseOn" | "itemUse" | "itemUseOn" | "leverAction" | "messageReceive" | "pistonActivate" | "playerBreakBlock" | "playerDimensionChange" | "playerInteractWithBlock" | "playerInteractWithEntity" | "playerJoin" | "playerLeave" | "playerPlaceBlock" | "playerSpawn" | "pressurePlatePop" | "pressurePlatePush" | "projectileHitBlock" | "projectileHitEntity" | "targetBlockHit" | "tripWireTrip" | "weatherChange" | "worldInitialize"
-    
+
 type WorldBeforeEvent = "_chatSend" | "_dataDrivenEntityTriggerEvent" | "_effectAdd" | "_entityRemove" | "_explosion" | "_itemDefinitionTriggered" | "_itemUse" | "_itemUseOn" | "_pistonActivateBeforeEvent" | "_playerBreakBlock" | "_playerInteractWithBlock" | "_playerInteractWithEntity" | "_playerLeave" | "_playerPlaceBlock"
-    
+
 type SystemAfterEvent = "scriptEventReceive"
 
 type SystemBeforeEvent = "_watchdogTerminate"
@@ -137,7 +137,7 @@ interface EventSignal {
     tripWireTrip: mc.TripWireTripAfterEvent;
     weatherChange: mc.WeatherChangeAfterEvent;
     worldInitialize: mc.WorldInitializeAfterEvent;
-    
+
     _chatSend: mc.ChatSendBeforeEvent;
     _dataDrivenEntityTriggerEvent: mc.DataDrivenEntityTriggerBeforeEvent;
     _effectAdd: mc.EffectAddBeforeEvent;
@@ -152,10 +152,10 @@ interface EventSignal {
     _playerInteractWithEntity: mc.PlayerInteractWithEntityBeforeEvent;
     _playerLeave: mc.PlayerLeaveBeforeEvent;
     _playerPlaceBlock: mc.PlayerPlaceBlockBeforeEvent;
-    
+
     scriptEventReceive: mc.ScriptEventCommandMessageAfterEvent;
     _watchdogTerminate: mc.WatchdogTerminateBeforeEvent;
-        
+
     onLookAtEntity: OnLookAtEntityAfterEvent;
     onLookAtBlock: OnLookAtBlockAfterEvent;
 }
