@@ -94,7 +94,7 @@ export class OnSneakingAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: OnSneakingAfterEvent) => void) {
-        let y = []
+        let y: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isSneaking) {
@@ -110,7 +110,7 @@ export class OnSneakingAfterEventSignal {
     }
 
     unsubscribe(callback: (args: OnSneakingAfterEvent) => void) {
-        let y = []
+        let y: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isSneaking) {
@@ -136,7 +136,7 @@ export class TouchFloorAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: TouchFloorAfterEvent) => void) {
-        let __touchFloor = []
+        let __touchFloor: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isOnGround) {
@@ -152,7 +152,7 @@ export class TouchFloorAfterEventSignal {
     }
 
     unsubscribe(callback: (args: TouchFloorAfterEvent) => void) {
-        let __touchFloor = []
+        let __touchFloor: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isOnGround) {
@@ -178,7 +178,7 @@ export class FallInWaterAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: FallInWaterAfterEvent) => void) {
-        let __entryInWater = []
+        let __entryInWater: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isInWater) {
@@ -194,7 +194,7 @@ export class FallInWaterAfterEventSignal {
     }
 
     unsubscribe(callback: (args: FallInWaterAfterEvent) => void) {
-        let __entryInWater = []
+        let __entryInWater: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isInWater) {
@@ -220,7 +220,7 @@ export class OnJumpAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: OnJumpAfterEvent) => void) {
-        let __isJumping = []
+        let __isJumping: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isJumping) {
@@ -236,7 +236,7 @@ export class OnJumpAfterEventSignal {
     }
 
     unsubscribe(callback: (args: OnJumpAfterEvent) => void) {
-        let __isJumping = []
+        let __isJumping: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isJumping) {
@@ -262,7 +262,7 @@ export class OnSleepAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: OnSleepAfterEvent) => void) {
-        let __isSleep = []
+        let __isSleep: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isSleeping) {
@@ -278,7 +278,7 @@ export class OnSleepAfterEventSignal {
     }
 
     unsubscribe(callback: (args: OnSleepAfterEvent) => void) {
-        let __isSleep = []
+        let __isSleep: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
                 if (i.isSleeping) {
@@ -305,10 +305,10 @@ export class FillInventoryAfterEventSignal {
     constructor() { }
 
     subscribe(callback: (args: FillInventoryAfterEvent) => void) {
-        let __fullInventory = []
+        let __fullInventory: string[] = []
         system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
-                let u = i.getComponent("minecraft:inventory").container
+                let u = i.getComponent("minecraft:inventory")?.container as mc.Container
                 if (u.emptySlotsCount === 0) {
                     if (!(__fullInventory.includes(i.name))) {
                         __fullInventory.push(i.name)
@@ -322,10 +322,44 @@ export class FillInventoryAfterEventSignal {
     }
 
     unsubscribe(callback: (args: FillInventoryAfterEvent) => void) {
-        let __fullInventory = []
+        let __fullInventory: string[] = []
         let n = system.runInterval(() => {
             for (let i of world.getAllPlayers()) {
-                let u = i.getComponent("minecraft:inventory").container
+                let u = i.getComponent("minecraft:inventory")?.container as mc.Container
+                if (u.emptySlotsCount === 0) {
+                    if (!(__fullInventory.includes(i.name))) {
+                        __fullInventory.push(i.name)
+                        callback({ source: i, container: u })
+                        system.clearRun(n)
+                    }
+                } else {
+                    __fullInventory.splice(__fullInventory.indexOf(i.name), 1)
+                }
+            }
+        }, 1)
+    }
+}
+
+
+export type SecondStepAfterEvent = {
+    source: mc.Player;
+    container: mc.Container;
+}
+
+export class SecondStepAfterEventSignal {
+    constructor() { }
+
+    subscribe(callback: () => void) {
+        system.runInterval(() => {
+            callback()
+        }, 20)
+    }
+
+    unsubscribe(callback: (args: FillInventoryAfterEvent) => void) {
+        let __fullInventory: string[] = []
+        let n = system.runInterval(() => {
+            for (let i of world.getAllPlayers()) {
+                let u = i.getComponent("minecraft:inventory")?.container as mc.Container
                 if (u.emptySlotsCount === 0) {
                     if (!(__fullInventory.includes(i.name))) {
                         __fullInventory.push(i.name)

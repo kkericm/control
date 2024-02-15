@@ -72,7 +72,7 @@ export class Control {
         if (typeof prop === "object") {
             return prop as T;
         } else {
-            return JSON.parse(prop as string) as T;
+            return JSON.parse(prop as unknown as string) as T;
         }
     };
     setProperty<T = any>(propertyName: string, _new: T): void {
@@ -82,6 +82,28 @@ export class Control {
         let data: T = this.getProperty<T>(propertyName);
         callback(data);
         this.setProperty(propertyName, data);
+    };
+
+    toRaw(inputString: RawString): mc.RawText {
+        const regex = /t\{(\w+(\.\w+)*)\}/g;
+        let raw: any = {rawtext: []};
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        
+        while ((match = regex.exec(inputString)) !== null) {
+            const prefix = inputString.substring(lastIndex, match.index); 
+            const variable = match[1]; 
+            if (prefix.length > 0) {
+                raw.rawtext.push({ text: prefix });
+            }
+            raw.rawtext.push({ translate: variable });
+            lastIndex = regex.lastIndex;
+        }
+        if (lastIndex < inputString.length) {
+            const remainingText = inputString.substring(lastIndex);
+            raw.rawtext.push({ text: remainingText });
+        }
+        return raw;
     };
 }
 
@@ -184,8 +206,10 @@ const customEvents = [
     "fallInWater",
     "onJump",
     "onSleep",
-    "fillInventory"
+    "fillInventory",
 ]
+
+type RawString = string
 
 // "touchFloor"
 // TouchFloorAfterEvent
@@ -205,3 +229,29 @@ const customEvents = [
 
 // FillInventoryAfterEvent
 // FillInventoryAfterEventSignal
+
+class Vec3 {
+    x: number
+    y: number
+    z: number
+    constructor(vector: mc.Vector3) {
+        this.x = vector.x;
+        this.y = vector.y;
+        this.z = vector.z;
+    }
+    distance(vec: Vec3 | mc.Vector3) {
+        return Math.sqrt(
+            Math.pow(this.x - vec.x, 2) +
+            Math.pow(this.y - vec.y, 2) +
+            Math.pow(this.z - vec.z, 2)
+        )
+    }
+    modify(call: (vec: this) => void) {
+        call(this);
+    }
+    get write() {
+        return `${this.x} ${this.y} ${this.z}`
+    }
+}
+
+export const vec3 = new Vec3({ x: 0, y: -60, z: 0 })
