@@ -65,7 +65,14 @@ control.setProperty<PlayerData[]>("Players", [
 control.editProperty<PlayerData[]>("Players", data => data[0].scores += 10);
 ]);
 // Retorna um array de `PlayerData`.
-control.getProperty<PlayerData[]>("Players");  // Literalmente `[{ name: "oERicM", scores: 10, role: "member" }]`
+control.getProperty<PlayerData[]>("Players");
+// Literalmente: [
+//     {
+//         name: "oERicM",
+//         scores: 10,
+//         role: "member"
+//     }
+// ]
 ```
 ### `toRaw`
 ex: Esse código converte uma *string* em uma *mc.RawText*.
