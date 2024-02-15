@@ -304,8 +304,8 @@ class ActionFormExtra {
         });
     };
 
-    buttons(buttonData: ([RawString | mc.RawMessage, string | undefined] | RawString | mc.RawMessage)[]): ActionFormExtra {
-        for (let i of buttonData) {
+    buttons(buttonsData: ([RawString | mc.RawMessage, string | undefined] | RawString | mc.RawMessage)[]): ActionFormExtra {
+        for (let i of buttonsData) {
             this.button(i[0], i[1]);
         };
         return this
@@ -333,5 +333,35 @@ interface ActionResponseExtra extends ui.ActionFormResponse {
 //             () => console.log("Clicou o botão 2!"),
 //             () => console.log("Clicou o botão 3!"),
 //             () => console.log("Clicou o botão 4!"),
-//         ])
+//         ]);
+//     });
+
+
+
+
+// const data = {
+//     foods: [
+//         {
+//             name: "foods.potato.name",
+//             id: "potato",
+//             price: 10,
+//             icon: "textures/items/potato"
+//         },
+//         {
+//             name: "foods.carrot.name",
+//             id: "carrot",
+//             price: 9,
+//             icon: "textures/items/carrot"
+//         }
+//         // ...
+//     ]
+// }
+
+// new ActionFormExtra()
+//     .title("Foods")
+//     .buttons(data.foods.map(d => [d.name, d.icon])) // organiza o objeto em um array formatado.
+//     .show(player).then(result => {
+//         result.select(data.foods.map(d => () => { // organiza as funções em um array de funções.
+//             // sistema de compra...
+//         })); 
 //     });
