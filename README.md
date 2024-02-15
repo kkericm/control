@@ -69,6 +69,12 @@ control.getProperty<PlayerData[]>("Players");  // Literalmente `[{ name: "oERicM
 | -------------- | ------------------------------------------------------------------------------ |
 | onLookAtEntity | Despara quando um player olhar para uma entidade(até 64 blocos de distancia).  |
 | onLookAtBlock  | Despara quando um player olhar para um bloco(até 64 blocos de distancia).      |
+| onSneaking     | Despara quando um player agacha.                                               |
+| touchFloor     | Despara quando um player toca uma superfice.                                   |
+| fallInWater    | Despara quando um player entra dentro d'água.                                  |
+| onJump         | Despara quando um player pula.                                                 |
+| onSleep        | Despara quando um player dorme.                                                |
+| fillInventory  | Despara quando um player enche todos os slots do inventário.                   |
 
 ex: Sempre que um player olha para uma entidade, na sua *actionBar* surge uma mensagem com o tipo dessa entidade. Por exemplo: "Tipo: Porco", quando se olha para um porco.
 ```ts
@@ -95,4 +101,20 @@ control.afterEvents.onLookAtEntity.subscribe(event => {
         ]
     })
 })
+```
+ex: Exemplo de um *Double Jump*, detecta se o player pulou, se o player estava no solo, e pulou, a quantidade de pulos restantes abaixa em *1*. Se estiver no ar, ele pode dar mais um pulo. Assim que toca o solo, os pulos são resetados.
+```ts
+let max = 2; // quantidade de pulos.
+let x = max;
+control.on("onJump", event => {
+    if (x == max) {
+        x -= 1;
+    } else if (x < max && x > 0) {
+        event.source.applyKnockback(0, 0, 0, 0.5);
+        x -= 1;
+    }
+});
+control.on("touchFloor", event => {
+    x = max;
+});
 ```
