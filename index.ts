@@ -87,13 +87,13 @@ export class Control {
 
     toRaw(inputString: RawString): mc.RawText {
         const regex = /t\{(\w+(\.\w+)*)\}/g;
-        let raw: any = {rawtext: []};
+        let raw: any = { rawtext: [] };
         let lastIndex = 0;
         let match: RegExpExecArray | null;
-        
+
         while ((match = regex.exec(inputString)) !== null) {
-            const prefix = inputString.substring(lastIndex, match.index); 
-            const variable = match[1]; 
+            const prefix = inputString.substring(lastIndex, match.index);
+            const variable = match[1];
             if (prefix.length > 0) {
                 raw.rawtext.push({ text: prefix });
             }
@@ -105,6 +105,20 @@ export class Control {
             raw.rawtext.push({ text: remainingText });
         }
         return raw;
+    };
+
+    range(min: number, max: number, step: number = 1): number[] {
+        if(max === undefined) max = min; min = 0;
+        if (step > 0) { 
+            let length = Math.abs((max - min) / step);
+            var index = Array.from({ length }, (_, index) => index);
+            return index.map(index => min + index * step);
+        } else {
+            step = Math.abs(step)
+            let length = Math.abs((max - min) / step);
+            var index = Array.from({ length }, (_, index) => index);
+            return index.map(index => min + (index + 1) * step).reverse();
+        }
     };
 }
 
@@ -212,7 +226,7 @@ const customEvents = [
 
 type RawString = string
 
-class Vec3 {
+export class Vec3 {
     x: number
     y: number
     z: number
@@ -238,16 +252,12 @@ class Vec3 {
 
 // export const vec3 = new Vec3({ x: 0, y: -60, z: 0 })
 
-class ActionFormExtra {
-    private data: {
-        title: mc.RawText;
-        body?: mc.RawText;
-        buttons: {
-            name: mc.RawText;
-            icon?: string;
-        }[];
+export class ActionFormExtra {
+    private data: { title: mc.RawText; body?: mc.RawText; buttons: { name: mc.RawText; icon?: string; }[] } = {
+        title: {},
+        buttons: []
     };
-    constructor() {}
+    constructor() { }
     title(titleText: RawString | mc.RawMessage): ActionFormExtra {
         if (typeof titleText === "string") {
             this.data.title = control.toRaw(titleText);
@@ -281,7 +291,7 @@ class ActionFormExtra {
         return this;
     };
     async show(player: mc.Player): Promise<ActionResponseExtra> {
-        let pl = new ui.ActionFormData().title(this.data.title)
+        let pl = new ui.ActionFormData().title(this.data.title);
         if (this.data.body !== undefined) pl.body(this.data.body);
         for (let i of this.data.buttons) {
             pl.button(i.name, i.icon);
@@ -291,7 +301,7 @@ class ActionFormExtra {
             resolve({
                 select(_data: { [key: number]: () => void } | (() => void)[]) {
                     if (!c.canceled) {
-                        _data[c.selection as number];
+                        _data[c.selection as number]();
                     }
                 },
                 cancel(_data: () => void) {
@@ -304,7 +314,7 @@ class ActionFormExtra {
         });
     };
 
-    buttons(buttonsData: ([RawString | mc.RawMessage, string | undefined] | RawString | mc.RawMessage)[]): ActionFormExtra {
+    buttons(buttonsData: ([RawString | mc.RawMessage, string | undefined] | [RawString | mc.RawMessage])[]): ActionFormExtra {
         for (let i of buttonsData) {
             this.button(i[0], i[1]);
         };
@@ -363,5 +373,5 @@ interface ActionResponseExtra extends ui.ActionFormResponse {
 //     .show(player).then(result => {
 //         result.select(data.foods.map(d => () => { // organiza as funções em um array de funções.
 //             // sistema de compra...
-//         })); 
+//         }));
 //     });
