@@ -1,5 +1,6 @@
 
 import * as mc from "@minecraft/server"
+import * as ui from "@minecraft/server-ui"
 import { world, system } from "@minecraft/server"
 import {
     OnLookAtEntityAfterEvent,
@@ -211,25 +212,6 @@ const customEvents = [
 
 type RawString = string
 
-// "touchFloor"
-// TouchFloorAfterEvent
-// TouchFloorAfterEventSignal
-
-// "fallInWater"
-// FallInWaterAfterEvent
-// FallInWaterAfterEventSignal
-
-// "onJump"
-// OnJumpAfterEvent
-// OnJumpAfterEventSignal
-
-// "onSleep"
-// OnSleepAfterEvent
-// OnSleepAfterEventSignal
-
-// FillInventoryAfterEvent
-// FillInventoryAfterEventSignal
-
 class Vec3 {
     x: number
     y: number
@@ -254,4 +236,102 @@ class Vec3 {
     }
 }
 
-export const vec3 = new Vec3({ x: 0, y: -60, z: 0 })
+// export const vec3 = new Vec3({ x: 0, y: -60, z: 0 })
+
+class ActionFormExtra {
+    private data: {
+        title: mc.RawText;
+        body?: mc.RawText;
+        buttons: {
+            name: mc.RawText;
+            icon?: string;
+        }[];
+    };
+    constructor() {}
+    title(titleText: RawString | mc.RawMessage): ActionFormExtra {
+        if (typeof titleText === "string") {
+            this.data.title = control.toRaw(titleText);
+        } else {
+            this.data.title = titleText;
+        }
+        return this;
+    };
+    body(bodyText: RawString | mc.RawMessage): ActionFormExtra {
+        if (typeof bodyText === "string") {
+            this.data.body = control.toRaw(bodyText);
+        } else {
+            this.data.body = bodyText;
+        }
+        return this;
+    };
+    button(text: RawString | mc.RawMessage, iconPath?: string | undefined): ActionFormExtra {
+        var bt: {
+            name: mc.RawText;
+            icon?: string | undefined;
+        } = {
+            name: {}
+        };
+        if (typeof text === "string") {
+            bt["name"] = control.toRaw(text);
+        } else {
+            bt["name"] = text;
+        }
+        bt["icon"] = iconPath;
+        this.data.buttons.push(bt);
+        return this;
+    };
+    async show(player: mc.Player): Promise<ActionResponseExtra> {
+        let pl = new ui.ActionFormData().title(this.data.title)
+        if (this.data.body !== undefined) pl.body(this.data.body);
+        for (let i of this.data.buttons) {
+            pl.button(i.name, i.icon);
+        };
+        let c = await pl.show(player)
+        return new Promise((resolve, reject) => {
+            resolve({
+                select(_data: { [key: number]: () => void } | (() => void)[]) {
+                    if (!c.canceled) {
+                        _data[c.selection as number];
+                    }
+                },
+                cancel(_data: () => void) {
+                    if (c.canceled) {
+                        _data();
+                    }
+                },
+                ...c
+            });
+        });
+    };
+
+    buttons(buttonData: ([RawString | mc.RawMessage, string | undefined] | RawString | mc.RawMessage)[]): ActionFormExtra {
+        for (let i of buttonData) {
+            this.button(i[0], i[1]);
+        };
+        return this
+    };
+}
+
+interface ActionResponseExtra extends ui.ActionFormResponse {
+    select: (_data: { [key: number]: () => void } | (() => void)[]) => void
+    cancel: (_data: () => void) => void
+}
+
+// const player = mc.Player.prototype;
+
+// new ActionFormExtra()
+//     .title("Menu")
+//     .buttons([
+//         "Botão 1",
+//         "Botão 2",
+//         "Botão 3",
+//         "Botão 4"
+//     ])
+//     .show(player).then(result => {
+//         result.select([
+//             () => console.log("Clicou o botão 1!"),
+//             () => console.log("Clicou o botão 2!"),
+//             () => console.log("Clicou o botão 3!"),
+//             () => console.log("Clicou o botão 4!"),
+//         ])
+//     });
