@@ -16,6 +16,7 @@ Módulos com recursos extras para a API do Minecraft Bedrock
 | getProperty  | Pega uma propriedade do mundo.                                   |
 | setProperty  | Define uma propriedade do mundo.                                 |
 | editProperty | Edita uma propriedade do mundo.                                  |
+| toRaw        | Converte uma `RawString` para `RawText`.                         |
 
 ## Exemplos
 
@@ -23,6 +24,8 @@ Importação:
 ```ts
 import { control } from "./control";
 ```
+
+### `on`
 
 ex: Usando o metodo *on* de *control* para detectar se um player usou uma espada de diamante, e matá-lo por isso.
 ```ts
@@ -40,6 +43,8 @@ control.on("_chatSend", event => {
     control.log(`[Member] <${event.sender}> ${event.message}`);
 });
 ```
+
+### `Property's`
 
 ex: Nesse exemplo se usa *getProperty*, *setProperty* e *editProperty* para criar uma propriedade usando um array tipo pré-definido, após "pega" os dados da propriedade, e logo após, soma 10 ao scores do player 0.
 ```ts
@@ -60,8 +65,28 @@ control.setProperty<PlayerData[]>("Players", [
 control.editProperty<PlayerData[]>("Players", data => data[0].scores += 10);
 ]);
 // Retorna um array de `PlayerData`.
-control.getProperty<PlayerData[]>("Players");  // Literalmente `[{ name: "oERicM", scores: 10, role: "member" }]`
+control.getProperty<PlayerData[]>("Players");
+// Literalmente: [
+//     {
+//         name: "oERicM",
+//         scores: 10,
+//         role: "member"
+//     }
+// ]
 ```
+### `toRaw`
+ex: Esse código converte uma *string* em uma *mc.RawText*.
+```ts
+const input = `t{common.wellcome}, ${player.name}!`;
+const output = control.toRaw(input);
+// output: {
+//     rawtext: [
+//         { translate: "common.wellcome" },
+//         { text: "oERicM" }
+//     ]
+// }
+```
+
 
 ## Eventos Extras
 
