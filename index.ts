@@ -8,8 +8,8 @@ import {
 } from "./events"
 import * as ev from "./events"
 
-export class Control {
-    on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
+export namespace Control {
+    export function on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
         let local: "system" | "world";
         let afbe: "afterEvents" | "beforeEvents";
         let mode: string;
@@ -38,11 +38,11 @@ export class Control {
         }
     };
 
-    onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
-        this.on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
+    export function onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
+        on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
     };
 
-    log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
+    export function log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
         var msg: string
         if (typeof message == "object") {
             msg = JSON.stringify(message, undefined, indent)
@@ -57,7 +57,7 @@ export class Control {
         }
     };
 
-    afterEvents = {
+    export const afterEvents = {
         onLookAtEntity: new ev.OnLookAtEntityAfterEventSignal(),
         onLookAtBlock: new ev.OnLookAtBlockAfterEventSignal(),
         onSneaking: new ev.OnSneakingAfterEventSignal(),
@@ -68,7 +68,7 @@ export class Control {
         fillInventory: new ev.FillInventoryAfterEventSignal(),
     };
 
-    getProperty<T = any>(propertyName: string): T {
+    export function getProperty<T = any>(propertyName: string): T {
         let prop: T = world.getDynamicProperty(propertyName) as any;
         if (typeof prop === "object") {
             return prop as T;
@@ -76,16 +76,16 @@ export class Control {
             return JSON.parse(prop as unknown as string) as T;
         }
     };
-    setProperty<T = any>(propertyName: string, _new: T): void {
+    export function setProperty<T = any>(propertyName: string, _new: T): void {
         world.setDynamicProperty(propertyName, JSON.stringify(_new));
     };
-    editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
-        let data: T = this.getProperty<T>(propertyName);
+    export function editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
+        let data: T = getProperty<T>(propertyName);
         callback(data);
-        this.setProperty(propertyName, data);
+        setProperty(propertyName, data);
     };
 
-    toRaw(inputString: RawString): mc.RawText {
+    export function toRaw(inputString: RawString): mc.RawText {
         const regex = /t\{(\w+(\.\w+)*)\}/g;
         let raw: any = { rawtext: [] };
         let lastIndex = 0;
@@ -106,10 +106,12 @@ export class Control {
         }
         return raw;
     };
+}
 
-    range(min: number, max: number, step: number = 1): number[] {
-        if(max === undefined) max = min; min = 0;
-        if (step > 0) { 
+export namespace Utils {
+    export function range(min: number, max?: number, step: number = 1): number[] {
+        if (max === undefined) max = min; min = 0;
+        if (step > 0) {
             let length = Math.abs((max - min) / step);
             var index = Array.from({ length }, (_, index) => index);
             return index.map(index => min + index * step);
@@ -120,9 +122,19 @@ export class Control {
             return index.map(index => min + (index + 1) * step).reverse();
         }
     };
+    export function defaultOptions<T>(deflt: T) {
+        const getDefaultOptions = (): T => (deflt);
+        const at = (options: T): T => ({
+            ...getDefaultOptions(),
+            ...options
+        });
+        return { at }
+    };
 }
 
-export const control = new Control()
+export const util = Utils
+
+export const control = Control
 
 type EventTrigger<Event> = Event | {
     trigger: Event,
@@ -133,7 +145,7 @@ type Event = WorldAfterEvent | WorldBeforeEvent | SystemAfterEvent | SystemBefor
 
 type WorldAfterEvent = "blockExplode" | "buttonPush" | "chatSend" | "dataDrivenEntityTrigger" | "effectAdd" | "entityDie" | "entityHealthChanged" | "entityHitBlock" | "entityHitEntity" | "entityHurt" | "entityLoad" | "entityRemove" | "entitySpawn" | "explosion" | "itemCompleteUse" | "itemDefinitionEvent" | "itemReleaseUse" | "itemStartUse" | "itemStartUseOn" | "itemStopUse" | "itemStopUseOn" | "itemUse" | "itemUseOn" | "leverAction" | "messageReceive" | "pistonActivate" | "playerBreakBlock" | "playerDimensionChange" | "playerInteractWithBlock" | "playerInteractWithEntity" | "playerJoin" | "playerLeave" | "playerPlaceBlock" | "playerSpawn" | "pressurePlatePop" | "pressurePlatePush" | "projectileHitBlock" | "projectileHitEntity" | "targetBlockHit" | "tripWireTrip" | "weatherChange" | "worldInitialize"
 
-type WorldBeforeEvent = "_chatSend" | "_dataDrivenEntityTriggerEvent" | "_effectAdd" | "_entityRemove" | "_explosion" | "_itemDefinitionTriggered" | "_itemUse" | "_itemUseOn" | "_pistonActivateBeforeEvent" | "_playerBreakBlock" | "_playerInteractWithBlock" | "_playerInteractWithEntity" | "_playerLeave" | "_playerPlaceBlock"
+type WorldBeforeEvent = "_chatSend" | "_dataDrivenEntityTriggerEvent" | "_effectAdd" | "_entityRemove" | "_explosion" | "_itemDefinitionTriggered" | "_itemUse" | "_itemUseOn" | "_pistonActivate" | "_playerBreakBlock" | "_playerInteractWithBlock" | "_playerInteractWithEntity" | "_playerLeave" | "_playerPlaceBlock"
 
 type SystemAfterEvent = "scriptEventReceive"
 
@@ -193,7 +205,7 @@ interface EventSignal {
     _itemDefinitionTriggered: mc.ItemDefinitionTriggeredBeforeEvent;
     _itemUse: mc.ItemUseBeforeEvent;
     _itemUseOn: mc.ItemUseOnBeforeEvent;
-    _pistonActivateBeforeEvent: mc.PistonActivateBeforeEvent;
+    _pistonActivate: mc.PistonActivateBeforeEvent;
     _playerBreakBlock: mc.PlayerBreakBlockBeforeEvent;
     _playerInteractWithBlock: mc.PlayerInteractWithBlockBeforeEvent;
     _playerInteractWithEntity: mc.PlayerInteractWithEntityBeforeEvent;
@@ -266,8 +278,10 @@ export class ActionFormExtra {
         }
         return this;
     };
-    body(bodyText: RawString | mc.RawMessage): ActionFormExtra {
-        if (typeof bodyText === "string") {
+    body(bodyText: RawString | mc.RawMessage | ModifyBody): ActionFormExtra {
+        if (bodyText instanceof ModifyBody) {
+            this.data.body = bodyText.resolved
+        } else if (typeof bodyText === "string") {
             this.data.body = control.toRaw(bodyText);
         } else {
             this.data.body = bodyText;
@@ -327,51 +341,125 @@ interface ActionResponseExtra extends ui.ActionFormResponse {
     cancel: (_data: () => void) => void
 }
 
-// const player = mc.Player.prototype;
+export class ModifyBody {
+    private body: mc.RawText = { rawtext: [] }
+    constructor() { };
 
-// new ActionFormExtra()
-//     .title("Menu")
-//     .buttons([
-//         "Botão 1",
-//         "Botão 2",
-//         "Botão 3",
-//         "Botão 4"
-//     ])
-//     .show(player).then(result => {
-//         result.select([
-//             () => console.log("Clicou o botão 1!"),
-//             () => console.log("Clicou o botão 2!"),
-//             () => console.log("Clicou o botão 3!"),
-//             () => console.log("Clicou o botão 4!"),
-//         ]);
-//     });
+    label(text: RawString, config: ModifyBodyLabelConfig = {}) {
+        var _config = util.defaultOptions<ModifyBodyLabelConfig>({ modify: "normal", indent: 0 }).at(config);
+        let color = {
+            body: "§l",
+            italic: "§o",
+            normal: "§r"
+        };
+        this.body.rawtext?.push(control.toRaw(`${" ".repeat(_config.indent as number)}${color[_config.modify as string]}${text}§r\n`));
+        return this;
+    };
+    progressBar(max: number, now: number, modify: string = "§e") {
+        let val = 38;
+        var char = "▌";
+        var final: string;
+        if (max < now) {
+            final = ` ${modify}${char.repeat(val)}§r\n`;
+        } else {
+            var a = Math.floor(now * val / max);
+            if (a == 0) {
+                final = ` ${modify}${char}§i${char.repeat(val)}§r\n`;
+            } else {
+                var y = val - a;
+                final = ` ${modify}${char.repeat(a)}§8${char.repeat(y)}§r\n`;
+            }
+        }
+        this.body.rawtext?.push({ text: final });
+        return this;
+    };
+    multLabel(data: ([RawString, ModifyBodyLabelConfig] | [RawString])[]) {
+        data.forEach(value => {
+            this.label(value[0], value[1]);
+        });
+        return this;
+    };
+    list(data: RawString[], mark: string = "") {
+        let u: string[] = []
+        data.forEach((i, e) => {
+            if (mark !== undefined) {
+                let k = this.convert(mark)
+                if (k.type === "number") {
+                    u.push(this.subts(k.infer.replace("[type]", `${e + 1}`), i));
+                } else if (k.type === "lower") {
+                    u.push(this.subts(k.infer.replace("[type]", `${this.ntos(e + 1, "lower")}`), i));
+                } else if (k.type === "upper") {
+                    u.push(this.subts(k.infer.replace("[type]", `${this.ntos(e + 1, "upper")}`), i));
+                } else {
+                    u.push(this.subts(k.infer, i));
+                }
+            } else {
+                u.push(i);
+            }
+        })
+        this.body.rawtext?.push(control.toRaw(u.join("\n")));
+        return this;
+    };
+    get space() {
+        this.label("");
+        return this;
+    }
+    private ntos(num: number, mode: "upper" | "lower") {
+        let lett = ''
+        const letters = {
+            upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            lower: "abcdefghijklmnopqrstuvwxyz"
+        }
 
+        while (num > 0) {
+            let remainder = (num - 1) % 26;
+            lett = letters[mode][remainder] + lett;
+            num = Math.floor((num - 1) / 26);
+        }
 
-
-
-// const data = {
-//     foods: [
-//         {
-//             name: "foods.potato.name",
-//             id: "potato",
-//             price: 10,
-//             icon: "textures/items/potato"
-//         },
-//         {
-//             name: "foods.carrot.name",
-//             id: "carrot",
-//             price: 9,
-//             icon: "textures/items/carrot"
-//         }
-//         // ...
-//     ]
-// }
-
-// new ActionFormExtra()
-//     .title("Foods")
-//     .buttons(data.foods.map(d => [d.name, d.icon])) // organiza o objeto em um array formatado.
-//     .show(player).then(result => {
-//         result.select(data.foods.map(d => () => { // organiza as funções em um array de funções.
-//             // sistema de compra...
-//         }));
-//     });
+        return lett;
+    };
+    private convert(inputString: string) {
+        const regex = /\[(\w+(\.\w+)*)\]/g;
+        let raw = { type: "void", infer: "" };
+        let lastIndex = 0;
+        let matches: any = [];
+        let match;
+        while ((match = regex.exec(inputString)) !== null) {
+            matches.push({
+                type: match[1],
+                index: match.index
+            });
+        }
+        for (let i = 0; i < matches.length; i++) {
+            const currentMatch = matches[i];
+            const prefix = inputString.substring(lastIndex, currentMatch.index);
+            if (prefix.length > 0) {
+                raw.infer += prefix;
+            }
+            raw.infer += "[type]";
+            lastIndex = currentMatch.index + currentMatch.type.length + 2;
+            raw.type = currentMatch.type;
+        }
+        if (lastIndex < inputString.length) {
+            const remainingText = inputString.substring(lastIndex);
+            raw.infer += remainingText;
+        }
+        return raw;
+    };
+    private subts(text: string, daal: string) {
+        text += " "
+        var lek = text.split("##");
+        lek.forEach((i, e) => {
+            lek[e] = i.replace(/#(?=[^#])/g, daal);
+        });
+        return lek.join("#").slice(0, -1);
+    };
+    get resolved() {
+        return this.body;
+    };
+}
+interface ModifyBodyLabelConfig {
+    modify?: "body" | "italic" | "normal";
+    indent?: number;
+}
