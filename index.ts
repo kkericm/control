@@ -8,8 +8,8 @@ import {
 } from "./events"
 import * as ev from "./events"
 
-export namespace Control {
-    export function on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
+export class Control {
+    static on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
         let local: "system" | "world";
         let afbe: "afterEvents" | "beforeEvents";
         let mode: string;
@@ -38,11 +38,11 @@ export namespace Control {
         }
     };
 
-    export function onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
-        on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
+    static onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
+        Control.on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
     };
 
-    export function log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
+    static log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
         var msg: string
         if (typeof message == "object") {
             msg = JSON.stringify(message, undefined, indent)
@@ -57,7 +57,7 @@ export namespace Control {
         }
     };
 
-    export const afterEvents = {
+    static afterEvents = {
         onLookAtEntity: new ev.OnLookAtEntityAfterEventSignal(),
         onLookAtBlock: new ev.OnLookAtBlockAfterEventSignal(),
         onSneaking: new ev.OnSneakingAfterEventSignal(),
@@ -68,7 +68,7 @@ export namespace Control {
         fillInventory: new ev.FillInventoryAfterEventSignal(),
     };
 
-    export function getProperty<T = any>(propertyName: string): T {
+    static getProperty<T = any>(propertyName: string): T {
         let prop: T = world.getDynamicProperty(propertyName) as any;
         if (typeof prop === "object") {
             return prop as T;
@@ -76,16 +76,16 @@ export namespace Control {
             return JSON.parse(prop as unknown as string) as T;
         }
     };
-    export function setProperty<T = any>(propertyName: string, _new: T): void {
+    static setProperty<T = any>(propertyName: string, _new: T): void {
         world.setDynamicProperty(propertyName, JSON.stringify(_new));
     };
-    export function editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
-        let data: T = getProperty<T>(propertyName);
+    static editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
+        let data: T = Control.getProperty<T>(propertyName);
         callback(data);
-        setProperty(propertyName, data);
+        Control.setProperty(propertyName, data);
     };
 
-    export function toRaw(inputString: RawString): mc.RawText {
+    static toRaw(inputString: RawString): mc.RawText {
         const regex = /t\{(\w+(\.\w+)*)\}/g;
         let raw: any = { rawtext: [] };
         let lastIndex = 0;
@@ -106,10 +106,8 @@ export namespace Control {
         }
         return raw;
     };
-}
 
-export namespace Utils {
-    export function range(min: number, max?: number, step: number = 1): number[] {
+    static range(min: number, max?: number, step: number = 1): number[] {
         if (max === undefined) max = min; min = 0;
         if (step > 0) {
             let length = Math.abs((max - min) / step);
@@ -122,7 +120,7 @@ export namespace Utils {
             return index.map(index => min + (index + 1) * step).reverse();
         }
     };
-    export function defaultOptions<T>(deflt: T) {
+    static defaultOptions<T>(deflt: T) {
         const getDefaultOptions = (): T => (deflt);
         const at = (options: T): T => ({
             ...getDefaultOptions(),
@@ -130,11 +128,22 @@ export namespace Utils {
         });
         return { at }
     };
+
+    static randInt(min: number, max: number) {
+        return Math.floor(Math.random() * ((max + 1) - min)) + min;
+    };
+    static randPound(...data: [any, number][]) {
+        let final = [];
+        data.forEach(i => {
+            let arr = new Array(i[1]).fill(i[0]);
+            final = final.concat(...arr);
+        })
+        return Control.randTo(...final);
+    };
+    static randTo(...data: any[]) {
+        return data[Control.randInt(0, data.length - 1)];
+    };
 }
-
-export const util = Utils
-
-export const control = Control
 
 type EventTrigger<Event> = Event | {
     trigger: Event,
@@ -262,8 +271,6 @@ export class Vec3 {
     }
 }
 
-// export const vec3 = new Vec3({ x: 0, y: -60, z: 0 })
-
 export class ActionFormExtra {
     private data: { title: mc.RawText; body?: mc.RawText; buttons: { name: mc.RawText; icon?: string; }[] } = {
         title: {},
@@ -272,7 +279,7 @@ export class ActionFormExtra {
     constructor() { }
     title(titleText: RawString | mc.RawMessage): ActionFormExtra {
         if (typeof titleText === "string") {
-            this.data.title = control.toRaw(titleText);
+            this.data.title = Control.toRaw(titleText);
         } else {
             this.data.title = titleText;
         }
@@ -282,7 +289,7 @@ export class ActionFormExtra {
         if (bodyText instanceof ModifyBody) {
             this.data.body = bodyText.resolved
         } else if (typeof bodyText === "string") {
-            this.data.body = control.toRaw(bodyText);
+            this.data.body = Control.toRaw(bodyText);
         } else {
             this.data.body = bodyText;
         }
@@ -296,7 +303,7 @@ export class ActionFormExtra {
             name: {}
         };
         if (typeof text === "string") {
-            bt["name"] = control.toRaw(text);
+            bt["name"] = Control.toRaw(text);
         } else {
             bt["name"] = text;
         }
@@ -327,8 +334,7 @@ export class ActionFormExtra {
             });
         });
     };
-
-    buttons(buttonsData: ([RawString | mc.RawMessage, string | undefined] | [RawString | mc.RawMessage])[]): ActionFormExtra {
+    buttons(...buttonsData: ([RawString, string | undefined] | [RawString])[]): ActionFormExtra {
         for (let i of buttonsData) {
             this.button(i[0], i[1]);
         };
@@ -346,28 +352,42 @@ export class ModifyBody {
     constructor() { };
 
     label(text: RawString, config: ModifyBodyLabelConfig = {}) {
-        var _config = util.defaultOptions<ModifyBodyLabelConfig>({ modify: "normal", indent: 0 }).at(config);
+        var _config = Control.defaultOptions<ModifyBodyLabelConfig>({ modify: "normal", indent: 0 }).at(config);
         let color = {
             body: "§l",
             italic: "§o",
             normal: "§r"
         };
-        this.body.rawtext?.push(control.toRaw(`${" ".repeat(_config.indent as number)}${color[_config.modify as string]}${text}§r\n`));
+        this.body.rawtext = this.body.rawtext?.concat(...Control.toRaw(`${" ".repeat(_config.indent as number)}${color[_config.modify as string]}${text}§r`).rawtext as mc.RawMessage[]);
         return this;
     };
-    progressBar(max: number, now: number, modify: string = "§e") {
-        let val = 38;
+    progressBar(max: number, now: number, options?: (option?: ProgressBarOptions, now?: number, max?: number) => void): this
+    progressBar(max: number, now: number, options?: ProgressBarOptions): this
+    progressBar(...args: any[]) {
+        const max = args[0]
+        const now = args[1]
+        var option: ProgressBarOptions = {
+            modifyLoad: "§e",
+            modifyVoid: "§8",
+            length: 38
+        }
+        try {
+            args[2](option, now, max)
+        } catch {
+            option = Control.defaultOptions<ProgressBarOptions>(option).at(args[2])
+        }
+        let val = option.length as number;
         var char = "▌";
         var final: string;
         if (max < now) {
-            final = ` ${modify}${char.repeat(val)}§r\n`;
+            final = ` ${option.modifyLoad}${char.repeat(val)}§r\n`;
         } else {
             var a = Math.floor(now * val / max);
             if (a == 0) {
-                final = ` ${modify}${char}§i${char.repeat(val)}§r\n`;
+                final = ` §r${option.modifyVoid}${char.repeat(val)}§r\n`;
             } else {
                 var y = val - a;
-                final = ` ${modify}${char.repeat(a)}§8${char.repeat(y)}§r\n`;
+                final = ` ${option.modifyLoad}${char.repeat(a)}§r${option.modifyVoid}${char.repeat(y)}§r\n`;
             }
         }
         this.body.rawtext?.push({ text: final });
@@ -397,11 +417,11 @@ export class ModifyBody {
                 u.push(i);
             }
         })
-        this.body.rawtext?.push(control.toRaw(u.join("\n")));
+        this.body.rawtext = this.body.rawtext?.concat(Control.toRaw(u.join("")).rawtext as mc.RawMessage[]);
         return this;
     };
     get space() {
-        this.label("");
+        this.label("\n");
         return this;
     }
     private ntos(num: number, mode: "upper" | "lower") {
@@ -456,10 +476,17 @@ export class ModifyBody {
         return lek.join("#").slice(0, -1);
     };
     get resolved() {
+        Control.log(this.body, undefined, 4);
         return this.body;
     };
 }
 interface ModifyBodyLabelConfig {
     modify?: "body" | "italic" | "normal";
     indent?: number;
+}
+
+interface ProgressBarOptions {
+    modifyLoad?: string;
+    modifyVoid?: string;
+    length?: number;
 }
