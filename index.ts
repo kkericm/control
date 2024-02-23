@@ -478,7 +478,7 @@ export class ModifyBody {
         return lek.join("#").slice(0, -1);
     };
     get resolved() {
-        control.log(this.body, undefined, 4);
+        // control.log(this.body, undefined, 4);
         return this.body;
     };
 }
