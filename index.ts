@@ -8,8 +8,8 @@ import {
 } from "./events"
 import * as ev from "./events"
 
-export class Control {
-    static on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
+class Control {
+    on<T extends Event>(eventTrigger: EventTrigger<T>, callback: (args: EventSignal[T]) => void) {
         let local: "system" | "world";
         let afbe: "afterEvents" | "beforeEvents";
         let mode: string;
@@ -38,11 +38,11 @@ export class Control {
         }
     };
 
-    static onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
-        Control.on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
+    onu<T extends Event>(eventTrigger: T, callback: (args: EventSignal[T]) => void) {
+        this.on({ trigger: eventTrigger, mode: "on_shot" }, event => callback(event))
     };
 
-    static log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
+    log(message: any, target?: mc.EntityQueryOptions, indent = 0) {
         var msg: string
         if (typeof message == "object") {
             msg = JSON.stringify(message, undefined, indent)
@@ -57,7 +57,7 @@ export class Control {
         }
     };
 
-    static afterEvents = {
+    afterEvents = {
         onLookAtEntity: new ev.OnLookAtEntityAfterEventSignal(),
         onLookAtBlock: new ev.OnLookAtBlockAfterEventSignal(),
         onSneaking: new ev.OnSneakingAfterEventSignal(),
@@ -68,7 +68,7 @@ export class Control {
         fillInventory: new ev.FillInventoryAfterEventSignal(),
     };
 
-    static getProperty<T = any>(propertyName: string): T {
+    getProperty<T = any>(propertyName: string): T {
         let prop: T = world.getDynamicProperty(propertyName) as any;
         if (typeof prop === "object") {
             return prop as T;
@@ -76,16 +76,16 @@ export class Control {
             return JSON.parse(prop as unknown as string) as T;
         }
     };
-    static setProperty<T = any>(propertyName: string, _new: T): void {
+    setProperty<T = any>(propertyName: string, _new: T): void {
         world.setDynamicProperty(propertyName, JSON.stringify(_new));
     };
-    static editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
-        let data: T = Control.getProperty<T>(propertyName);
+    editProperty<T = any>(propertyName: string, callback: (arg: T) => void): void {
+        let data: T = this.getProperty<T>(propertyName);
         callback(data);
-        Control.setProperty(propertyName, data);
+        this.setProperty(propertyName, data);
     };
 
-    static toRaw(inputString: RawString): mc.RawText {
+    toRaw(inputString: RawString): mc.RawText {
         const regex = /t\{(\w+(\.\w+)*)\}/g;
         let raw: any = { rawtext: [] };
         let lastIndex = 0;
@@ -107,7 +107,7 @@ export class Control {
         return raw;
     };
 
-    static range(min: number, max?: number, step: number = 1): number[] {
+    range(min: number, max?: number, step: number = 1): number[] {
         if (max === undefined) max = min; min = 0;
         if (step > 0) {
             let length = Math.abs((max - min) / step);
@@ -120,7 +120,7 @@ export class Control {
             return index.map(index => min + (index + 1) * step).reverse();
         }
     };
-    static defaultOptions<T>(deflt: T) {
+    defaultOptions<T>(deflt: T) {
         const getDefaultOptions = (): T => (deflt);
         const at = (options: T): T => ({
             ...getDefaultOptions(),
@@ -129,21 +129,23 @@ export class Control {
         return { at }
     };
 
-    static randInt(min: number, max: number) {
+    randInt(min: number, max: number) {
         return Math.floor(Math.random() * ((max + 1) - min)) + min;
     };
-    static randPound(...data: [any, number][]) {
+    randPound(...data: [any, number][]) {
         let final = [];
         data.forEach(i => {
             let arr = new Array(i[1]).fill(i[0]);
             final = final.concat(...arr);
         })
-        return Control.randTo(...final);
+        return this.randTo(...final);
     };
-    static randTo(...data: any[]) {
-        return data[Control.randInt(0, data.length - 1)];
+    randTo(...data: any[]) {
+        return data[this.randInt(0, data.length - 1)];
     };
 }
+
+export const control = new Control()
 
 type EventTrigger<Event> = Event | {
     trigger: Event,
@@ -279,7 +281,7 @@ export class ActionFormExtra {
     constructor() { }
     title(titleText: RawString | mc.RawMessage): ActionFormExtra {
         if (typeof titleText === "string") {
-            this.data.title = Control.toRaw(titleText);
+            this.data.title = control.toRaw(titleText);
         } else {
             this.data.title = titleText;
         }
@@ -289,7 +291,7 @@ export class ActionFormExtra {
         if (bodyText instanceof ModifyBody) {
             this.data.body = bodyText.resolved
         } else if (typeof bodyText === "string") {
-            this.data.body = Control.toRaw(bodyText);
+            this.data.body = control.toRaw(bodyText);
         } else {
             this.data.body = bodyText;
         }
@@ -303,7 +305,7 @@ export class ActionFormExtra {
             name: {}
         };
         if (typeof text === "string") {
-            bt["name"] = Control.toRaw(text);
+            bt["name"] = control.toRaw(text);
         } else {
             bt["name"] = text;
         }
@@ -352,13 +354,13 @@ export class ModifyBody {
     constructor() { };
 
     label(text: RawString, config: ModifyBodyLabelConfig = {}) {
-        var _config = Control.defaultOptions<ModifyBodyLabelConfig>({ modify: "normal", indent: 0 }).at(config);
+        var _config = control.defaultOptions<ModifyBodyLabelConfig>({ modify: "normal", indent: 0 }).at(config);
         let color = {
             body: "§l",
             italic: "§o",
             normal: "§r"
         };
-        this.body.rawtext = this.body.rawtext?.concat(...Control.toRaw(`${" ".repeat(_config.indent as number)}${color[_config.modify as string]}${text}§r`).rawtext as mc.RawMessage[]);
+        this.body.rawtext = this.body.rawtext?.concat(...control.toRaw(`${" ".repeat(_config.indent as number)}${color[_config.modify as string]}${text}§r`).rawtext as mc.RawMessage[]);
         return this;
     };
     progressBar(max: number, now: number, options?: (option?: ProgressBarOptions, now?: number, max?: number) => void): this
@@ -374,7 +376,7 @@ export class ModifyBody {
         try {
             args[2](option, now, max)
         } catch {
-            option = Control.defaultOptions<ProgressBarOptions>(option).at(args[2])
+            option = control.defaultOptions<ProgressBarOptions>(option).at(args[2])
         }
         let val = option.length as number;
         var char = "▌";
@@ -417,7 +419,7 @@ export class ModifyBody {
                 u.push(i);
             }
         })
-        this.body.rawtext = this.body.rawtext?.concat(Control.toRaw(u.join("")).rawtext as mc.RawMessage[]);
+        this.body.rawtext = this.body.rawtext?.concat(control.toRaw(u.join("")).rawtext as mc.RawMessage[]);
         return this;
     };
     get space() {
@@ -476,7 +478,7 @@ export class ModifyBody {
         return lek.join("#").slice(0, -1);
     };
     get resolved() {
-        Control.log(this.body, undefined, 4);
+        control.log(this.body, undefined, 4);
         return this.body;
     };
 }
@@ -484,7 +486,6 @@ interface ModifyBodyLabelConfig {
     modify?: "body" | "italic" | "normal";
     indent?: number;
 }
-
 interface ProgressBarOptions {
     modifyLoad?: string;
     modifyVoid?: string;
